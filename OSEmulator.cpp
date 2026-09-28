@@ -9,6 +9,8 @@
 
 using namespace std;
 
+const int MARQUEE_HEIGHT = 10; // number of rows the text bounces around in
+
 mutex consoleMutex; // only one thread may write to the console at a time
 
 // Thread-safe printing
@@ -108,9 +110,11 @@ int main(){
     HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 
     GetConsoleScreenBufferInfo(console, &consoleInfo);
-    COORD marqueePosition = consoleInfo.dwCursorPosition;
+    COORD marqueePosition = consoleInfo.dwCursorPosition; // top-left of the area
 
-    cout << endl;
+    for (int row = 0; row < MARQUEE_HEIGHT; row++){
+        cout << endl;
+    }
 
     // Main command loop
     while (flag == 1){
@@ -124,41 +128,57 @@ int main(){
         else if (command == "start_marquee"){
             if (!running){
                 running = true;
-
+ 
                 marqueeThread = thread([&](){
-                    int position = 0;
-
+                    int x = 0, y = 0;   // text position inside the area
+                    int dx = 1, dy = 1; // direction: right and down
+ 
                     while (running){
                         // Re-read the text every frame so set_text updates it live
                         textMutex.lock();
-                        string displayText = marqueeText + "     ";
+                        string text = marqueeText;
                         textMutex.unlock();
-
-                        if (position >= (int)displayText.length()){
-                            position = 0;
-                        }
-
-                        // Display the moving text
-                        string output = displayText.substr(position)
-                                      + displayText.substr(0, position);
-
+ 
                         consoleMutex.lock();
-
+ 
                         CONSOLE_SCREEN_BUFFER_INFO info;
                         GetConsoleScreenBufferInfo(console, &info);
-
-                        // Pad or cut the text to exactly one line so it never wraps
-                        output.resize(info.dwSize.X - 1, ' ');
-
-                        // Move to the marquee line, draw, then restore the cursor
-                        SetConsoleCursorPosition(console, marqueePosition);
-                        cout << output << flush;
-                        SetConsoleCursorPosition(console, info.dwCursorPosition);
-
+ 
+                        // Keep the text inside the console width
+                        int width = info.dwSize.X - 1;
+                        if ((int)text.length() > width){
+                            text = text.substr(0, width);
+                        }
+ 
+                        int maxX = width - text.length(); // furthest column
+                        int maxY = MARQUEE_HEIGHT - 1;    // furthest row
+ 
+                        // Stay in bounds if the text got longer
+                        if (x > maxX) x = maxX;
+                        if (y > maxY) y = maxY;
+ 
+                        // Redraw the whole marquee box (every row is spaces except the one with the text)
+                        for (int row = 0; row < MARQUEE_HEIGHT; row++){
+                            string line(width, ' ');
+                            if (row == y){
+                                line.replace(x, text.length(), text);
+                            }
+ 
+                            COORD rowPosition = {0, (SHORT)(marqueePosition.Y + row)};
+                            DWORD written;
+                            WriteConsoleOutputCharacterA(console, line.c_str(), line.length(), rowPosition, &written);
+                        }
+ 
                         consoleMutex.unlock();
-
-                        position++;
-
+ 
+                        // Move diagonally and bounce off the edges
+                        x += dx;
+                        y += dy;
+                        if (x <= 0)    dx = 1;
+                        if (x >= maxX) dx = -1;
+                        if (y <= 0)    dy = 1;
+                        if (y >= maxY) dy = -1;
+ 
                         // Wait in short steps so stop_marquee responds right away
                         auto wakeTime = chrono::steady_clock::now()
                                       + chrono::milliseconds(marqueeSpeed.load());
@@ -167,7 +187,7 @@ int main(){
                         }
                     }
                 });
-
+ 
                 print("Marquee started.\n");
             }
             else{
@@ -184,9 +204,14 @@ int main(){
                 consoleMutex.lock();
                 CONSOLE_SCREEN_BUFFER_INFO info;
                 GetConsoleScreenBufferInfo(console, &info);
-                SetConsoleCursorPosition(console, marqueePosition);
-                cout << string(info.dwSize.X - 1, ' ') << flush;
-                SetConsoleCursorPosition(console, info.dwCursorPosition);
+                
+                for (int row = 0; row < MARQUEE_HEIGHT; row++){
+                    string blank(info.dwSize.X - 1, ' ');
+					COORD rowPosition = {0, (SHORT)(marqueePosition.Y + row)};
+					DWORD written;
+                    WriteConsoleOutputCharacterA(console, blank.c_str(), blank.length(), rowPosition, &written);
+                }
+
                 consoleMutex.unlock();
 
                 print("Marquee stopped.\n");
@@ -227,7 +252,9 @@ int main(){
             // The screen was wiped, so find the new marquee line
             GetConsoleScreenBufferInfo(console, &consoleInfo);
             marqueePosition = consoleInfo.dwCursorPosition;
-            cout << endl;
+            for (int row = 0; row < MARQUEE_HEIGHT; row++){
+                cout << endl;
+            }
             consoleMutex.unlock();
         }
 
