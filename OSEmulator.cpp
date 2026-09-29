@@ -10,6 +10,7 @@
 using namespace std;
 
 const int MARQUEE_HEIGHT = 10; // number of rows the text bounces around in
+const int MARQUEE_WIDTH = 40;  // number of columns the text bounces around in
 
 mutex consoleMutex; // only one thread may write to the console at a time
 
@@ -145,7 +146,10 @@ int main(){
                         GetConsoleScreenBufferInfo(console, &info);
  
                         // Keep the text inside the console width
-                        int width = info.dwSize.X - 1;
+                        int width = MARQUEE_WIDTH;
+                        if (width > info.dwSize.X - 1){
+                            width = info.dwSize.X - 1;
+                        }
                         if ((int)text.length() > width){
                             text = text.substr(0, width);
                         }
