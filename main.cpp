@@ -21,8 +21,8 @@ bool shutdownPopup = false;
 bool poweredOff = false;
 
 // Default wallpaper settings (can be changed from the Settings app)
-ImVec4 wallpaperTop = ImVec4(0.10f, 0.20f, 0.45f, 1.0f);
-ImVec4 wallpaperBottom = ImVec4(0.45f, 0.15f, 0.40f, 1.0f);
+ImVec4 wallpaperTop = ImVec4(25/255.0f, 50/255.0f, 100/255.0f, 1.0f);
+ImVec4 wallpaperBottom = ImVec4(100/255.0f, 25/255.0f, 100/255.0f, 1.0f);
 bool showPattern = true;
 
 // Initialize empty Notes app
@@ -234,15 +234,15 @@ void drawTaskManager(){
 
     if (ImGui::Begin("Task Manager", &taskManagerOpen)){ // dummy process list
         Process processes[] = {
-            {"System",              4, 0.4f,   0.1f, "Running"},
-            {"Desktop Compositor", 812, 2.1f,  88.4f, "Running"},
-            {"Taskbar",            904, 0.3f,  24.7f, "Running"},
-            {"Notes",             1320, 0.0f,  12.3f, notesOpen ? "Running" : "Suspended"},
-            {"Settings",          1544, 0.1f,  18.9f, settingsOpen ? "Running" : "Suspended"},
-            {"Task Manager",      1688, 1.2f,  30.2f, "Running"},
-            {"Antivirus Service", 2032, 3.5f, 142.6f, "Running"},
-            {"Audio Service",     2210, 0.2f,   9.8f, "Running"},
-            {"Network Service",   2398, 0.6f,  15.1f, "Running"},
+            {"System", 4, 4.5f, 412.6f, "Running"},
+            {"Desktop Compositor", 812, 12.8f, 685.3f, "Running"},
+            {"Taskbar", 904, 2.4f, 148.2f, "Running"},
+            {"Notes", 1320, 1.6f, 96.4f, notesOpen ? "Running" : "Suspended"},
+            {"Settings", 1544, 2.1f, 132.7f, settingsOpen ? "Running" : "Suspended"},
+            {"Task Manager", 1688, 5.3f, 174.9f, "Running"},
+            {"Antivirus Service", 2032, 24.6f, 893.5f, "Running"},
+            {"Audio Service", 2210, 3.9f, 211.8f, "Running"},
+            {"Network Service", 2398, 9.8f, 316.6f, "Running"},
         };
         int count = sizeof(processes) / sizeof(processes[0]);
 
@@ -281,9 +281,9 @@ void drawTaskManager(){
                 ImGui::Text("CPU");
                 ImGui::ProgressBar(0.67f, ImVec2(-1, 0), "67%");
                 ImGui::Text("Memory");
-                ImGui::ProgressBar(0.975f, ImVec2(-1, 0), "3.9 / 4.0 GB (97.5%)");
+                ImGui::ProgressBar(0.75f, ImVec2(-1, 0), "3.0 / 4.0 GB (75%)");
                 ImGui::Text("Disk");
-                ImGui::ProgressBar(0.99f, ImVec2(-1, 0), "99%");
+                ImGui::ProgressBar(0.95f, ImVec2(-1, 0), "95%");
                 ImGui::EndTabItem();
             }
             ImGui::EndTabBar();
