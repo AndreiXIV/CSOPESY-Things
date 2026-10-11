@@ -50,7 +50,7 @@ void drawWallpaper(ImVec2 screen){
     }
 
     // OS name in the middle of the desktop
-    const char* title = "hehe monke"; // paltan nyo nalng HAHAH
+    const char* title = "CSOPESY G5";
     float scale = 5.0f;
     ImVec2 size = ImGui::CalcTextSize(title);
     ImVec2 pos = ImVec2((screen.x - size.x * scale) / 2, (screen.y - TASKBAR_HEIGHT - size.y * scale) / 2);
