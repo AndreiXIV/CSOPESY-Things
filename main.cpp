@@ -164,7 +164,7 @@ Instruction randomSimpleInstruction(){
     ins.var = randomVar();
 
     if (ins.type == PRINT){
-        ins.var = ""; // default "Hello <name>!" message
+        ins.var = ""; // default "<name> is running..." message
     }
     else if (ins.type == DECLARE){
         ins.a.value = (int)randomInt(0, 100);
@@ -214,7 +214,7 @@ void executeInstruction(Process* p, const Instruction& ins, int coreId){
     if (ins.type == PRINT){
         string msg;
         if (ins.var.empty()){
-            msg = "Hello " + p->name + "!";
+            msg = p->name + " is running...";
         }
         else{
             msg = "Value from: " + to_string(p->variables[ins.var]);
