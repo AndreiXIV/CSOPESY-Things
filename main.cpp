@@ -202,6 +202,28 @@ vector<Instruction> generateInstructions(unsigned long long count, int depth){
     return list;
 }
 
+// Test case: alternating PRINT("Value from: " + x) and ADD(x, x, [1-10])
+vector<Instruction> generateTestInstructions(unsigned long long count){
+    vector<Instruction> list;
+
+    for (unsigned long long i = 0; i < count; i++){
+        Instruction ins;
+        ins.var = "x";
+
+        if (i % 2 == 0){
+            ins.type = PRINT; // PRINT("Value from: " + x)
+        }
+        else{
+            ins.type = ADD; // ADD(x, x, random 1-10)
+            ins.a.isVar = true;
+            ins.a.name = "x";
+            ins.b.value = (int)randomInt(1, 10);
+        }
+        list.push_back(ins);
+    }
+    return list;
+}
+
 /* INSTRUCTION EXECUTION */
 uint16_t valueOf(Process* p, const Operand& op){
     if (op.isVar){
@@ -275,6 +297,7 @@ Process* createProcess(const string& name){
     p->id = nextProcessId++;
     p->createdAt = timestamp();
     p->totalLines = randomInt(minIns, maxIns);
+    p->variables["x"] = 0;
 
     allProcesses.push_back(p);
     processByName[name] = p;
@@ -368,7 +391,7 @@ void cpuTick(){
             readyQueue.pop_front();
 
             if (!p->generated){
-                p->instructions = generateInstructions(p->totalLines, 0);
+                p->instructions = generateTestInstructions(p->totalLines);
                 p->stack.push_back({&p->instructions, 0, 1});
                 p->generated = true;
             }
