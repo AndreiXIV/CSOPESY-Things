@@ -21,14 +21,15 @@
 using namespace std;
 
 /* CONFIGURATION */
-int numCpu = 4;                       // [1, 128]
-string schedulerType = "rr";          // fcfs or rr
-unsigned long long quantumCycles = 5; // RR time slice in CPU ticks
-unsigned long long batchFreq = 1;     // new process every X ticks (scheduler-start)
-unsigned long long minIns = 1000;     // instructions per process (min)
-unsigned long long maxIns = 2000;     // instructions per process (max)
-unsigned long long delayPerExec = 0;  // busy-wait ticks after each instruction
-int tickMs = 50;                      // real milliseconds per CPU tick (optional key: tick-ms)
+int numCpu = 4;                        // [1, 128]
+string schedulerType = "rr";           // fcfs or rr
+unsigned long long quantumCycles = 5;  // RR time slice in CPU ticks
+unsigned long long batchFreq = 1;      // new process every X ticks (scheduler-start)
+unsigned long long minIns = 1000;      // instructions per process (min)
+unsigned long long maxIns = 2000;      // instructions per process (max)
+unsigned long long delayPerExec = 0;   // busy-wait ticks after each instruction
+int tickMs = 50;                       // real milliseconds per CPU tick (optional key: tick-ms)
+unsigned long long cyclesPerTick = 10; // CPU cycles each core runs per scheduler tick
 
 /* PROCESS INSTRUCTIONS */
 enum InstructionType { PRINT, DECLARE, ADD, SUBTRACT, SLEEP, FOR };
@@ -321,7 +322,7 @@ void removeFromCore(int c){
     cores[c] = nullptr;
 }
 
-void cpuTick(){
+void cpuCycle(){
     // 1. Wake up sleeping processes
     for (size_t i = 0; i < sleepingProcesses.size(); ){
         Process* p = sleepingProcesses[i];
@@ -375,16 +376,7 @@ void cpuTick(){
         }
     }
 
-    // 3. scheduler-start: new process every batchFreq ticks
-    if (generating){
-        ticksSinceBatch++;
-        if (ticksSinceBatch >= batchFreq){
-            createProcess(nextGeneratedName());
-            ticksSinceBatch = 0;
-        }
-    }
-
-    // 4. Give idle cores the next process in the ready queue (done last so no core sits idle between ticks)
+    // 3. Give idle cores the next process in the ready queue (done last so no core sits idle between ticks)
     for (int c = 0; c < numCpu; c++){
         if (cores[c] == nullptr && !readyQueue.empty()){
             Process* p = readyQueue.front();
@@ -403,6 +395,22 @@ void cpuTick(){
     }
 
     cpuTicks++;
+}
+
+// One scheduler tick: the cores run several CPU cycles, 
+// then the scheduler may generate a new process
+void cpuTick(){
+    for (unsigned long long i = 0; i < cyclesPerTick; i++){
+        cpuCycle();
+    }
+
+    if (generating){ // scheduler-start: new process every batchFreq ticks
+        ticksSinceBatch++;
+        if (ticksSinceBatch >= batchFreq){
+            createProcess(nextGeneratedName());
+            ticksSinceBatch = 0;
+        }
+    }
 }
 
 void cpuLoop(){
